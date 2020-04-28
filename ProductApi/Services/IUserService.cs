@@ -8,7 +8,7 @@ namespace ProductApi.Services
 {
     public interface IUserService
     {
-        public Task<User> Authenticate(User user);
+        public Task<User> Authenticate(string email, string password);
 
         public Task<User> Register(User user);
     }

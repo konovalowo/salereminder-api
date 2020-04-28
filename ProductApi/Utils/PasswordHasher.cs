@@ -11,7 +11,7 @@ namespace ProductApi.Utils
         const int iterationsCount = 1000;
         const int saltSize = 16;
 
-        private static byte[] HashPassword(string password, byte[] salt)
+        public static byte[] HashPassword(string password, byte[] salt)
         {
             if (salt.Length != saltSize)
             {
@@ -31,7 +31,7 @@ namespace ProductApi.Utils
             return hashedPasswordWithSalt;
         }
 
-        private static byte[] GenerateSalt()
+        public static byte[] GenerateSalt()
         {
             byte[] salt = new byte[saltSize];
             using (var rng = RandomNumberGenerator.Create())
@@ -41,13 +41,13 @@ namespace ProductApi.Utils
             return salt;
         }
 
-        private static bool ComparePasswords(string providedPassword, User user)
+        public static bool ComparePasswords(string providedPassword, User user)
         {
             byte[] salt = new byte[saltSize];
             byte[] passwordHash = Convert.FromBase64String(user.Password);
             Array.Copy(passwordHash, 0, salt, 0, saltSize);
             byte[] providedPasswordHash = HashPassword(providedPassword, salt);
-            return Convert.ToBase64String(providedPasswordHash).CompareTo(user.Password) == 0;
+            return Convert.ToBase64String(providedPasswordHash) == (user.Password);
         }
     }
 }

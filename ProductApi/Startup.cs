@@ -13,6 +13,8 @@ using Microsoft.Extensions.Logging;
 
 using Microsoft.EntityFrameworkCore;
 using ProductApi.Models;
+using Microsoft.AspNetCore.Authentication;
+using ProductApi.Services;
 
 namespace ProductApi
 {
@@ -31,6 +33,11 @@ namespace ProductApi
             services.AddDbContext<ProductContext>(opt =>
                 opt.UseInMemoryDatabase("ProductList"));
             services.AddControllers();
+
+            services.AddAuthentication("BasicAuthentication")
+                .AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>("BasicAuthentication", null);
+
+            services.AddTransient<IUserService, UserService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -43,7 +50,11 @@ namespace ProductApi
 
             app.UseHttpsRedirection();
 
+            app.UseAuthentication();
+
             app.UseRouting();
+
+            app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
             {
