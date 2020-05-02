@@ -24,7 +24,7 @@ namespace ProductApi.Controllers
             _logger = logger;
         }
 
-        [HttpPost("authenticate")]
+        [HttpPost("login")]
         public async Task<IActionResult> Authenticate([FromBody]User userParam)
         {
             var user = await _userService.Authenticate(userParam.Email, userParam.Password);

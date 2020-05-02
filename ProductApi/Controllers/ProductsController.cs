@@ -6,9 +6,10 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ProductApi.Models;
-
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using System.Security.Claims;
 
 namespace ProductApi.Controllers
 {
@@ -34,8 +35,20 @@ namespace ProductApi.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Product>>> GetProducts()
         {
-            _logger.LogInformation($"Get request for products.");
-            return await _context.Products.ToListAsync();
+            _logger.LogInformation($"Get request for products");
+            string currentUserId = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+            try
+            {
+                UserProfile profile = await _context.UserProfiles.SingleAsync(profile => profile.UserId.ToString() == currentUserId);
+                var productList = profile.UserProducts.Select(products => products.Product).ToList();
+                return productList;
+            }
+            catch (InvalidOperationException e)
+            {
+                _logger.LogInformation($"Get request failed: {e.Message}");
+                return BadRequest();
+            }
+            //return await _context.Products.ToListAsync();
         }
 
         // GET: api/Products/5
@@ -90,10 +103,30 @@ namespace ProductApi.Controllers
         {
             try
             {
-                product = _parser.ParseProduct(product.Url);
-                _context.Products.Add(product);
-                await _context.SaveChangesAsync();
+                string currentUserId = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+                UserProfile profile = await _context.UserProfiles.SingleAsync(profile => profile.UserId.ToString() == currentUserId);
+
+                string productUrl = product.Url.RemoveQueryString();
+                Product productParsed = await _context.Products.FirstOrDefaultAsync(product => product.Url == productUrl);
+
+                if (productParsed == null)
+                {
+                    productParsed = _parser.ParseProduct(product.Url);
+                    _context.Products.Add(productParsed);
+                    await _context.SaveChangesAsync();
+                }
+
+                productParsed = await _context.Products.LastAsync();
+                profile.UserProducts.Add(new UserProfileProduct { UserProfileId = profile.Id, ProductId = productParsed.Id });
+                // фиксики
+                await _context.SaveChangesAsync(); 
+
                 _logger.LogInformation($"Post request: added product (id={product.Id})");
+            }
+            catch (NullReferenceException e)
+            {
+                _logger.LogInformation($"Post request failed: No such user, {e.Message}");
+                return BadRequest();
             }
             catch (Exception e)
             {

@@ -38,12 +38,12 @@ namespace ProductApi.Models
                 });
 
             modelBuilder.Entity<UserProfileProduct>()
-                .HasKey(t => new { t.UserId, t.ProductId });
+                .HasKey(t => new { t.UserProfileId, t.ProductId });
 
             modelBuilder.Entity<UserProfileProduct>()
-                .HasOne(sc => sc.User)
+                .HasOne(sc => sc.UserProfile)
                 .WithMany(s => s.UserProducts)
-                .HasForeignKey(sc => sc.UserId);
+                .HasForeignKey(sc => sc.UserProfileId);
 
             modelBuilder.Entity<UserProfileProduct>()
                 .HasOne(sc => sc.Product)

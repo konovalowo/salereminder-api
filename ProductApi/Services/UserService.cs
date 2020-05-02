@@ -34,7 +34,7 @@ namespace ProductApi.Services
         {
             if (_context.Users.FirstOrDefault(x => (x.Email == user.Email)) != null)
             {
-                throw new ArgumentException("User already exists.");
+                throw new ArgumentException("User already exists");
             }
 
             byte[] hashedPasswordSalt = PasswordHasher.HashPassword(user.Password, PasswordHasher.GenerateSalt());
