@@ -39,7 +39,8 @@ namespace ProductApi.Controllers
             string currentUserId = User.FindFirst(ClaimTypes.NameIdentifier).Value;
             try
             {
-                UserProfile profile = await _context.UserProfiles.SingleAsync(profile => profile.UserId.ToString() == currentUserId);
+                UserProfile profile = await _context.UserProfiles.Include(p => p.UserProducts).ThenInclude(p => p.Product)
+                                                                 .SingleAsync(p => p.UserId.ToString() == currentUserId);
                 var productList = profile.UserProducts.Select(products => products.Product).ToList();
                 return productList;
             }
@@ -48,7 +49,6 @@ namespace ProductApi.Controllers
                 _logger.LogInformation($"Get request failed: {e.Message}");
                 return BadRequest();
             }
-            //return await _context.Products.ToListAsync();
         }
 
         // GET: api/Products/5
@@ -104,21 +104,20 @@ namespace ProductApi.Controllers
             try
             {
                 string currentUserId = User.FindFirst(ClaimTypes.NameIdentifier).Value;
-                UserProfile profile = await _context.UserProfiles.SingleAsync(profile => profile.UserId.ToString() == currentUserId);
+                UserProfile profile = await _context.UserProfiles.SingleAsync(p => p.UserId.ToString() == currentUserId);
 
                 string productUrl = product.Url.RemoveQueryString();
-                Product productParsed = await _context.Products.FirstOrDefaultAsync(product => product.Url == productUrl);
+                product = await _context.Products.FirstOrDefaultAsync(p => p.Url == productUrl);
 
-                if (productParsed == null)
+                if (product == null)
                 {
-                    productParsed = _parser.ParseProduct(product.Url);
-                    _context.Products.Add(productParsed);
+                    product = _parser.ParseProduct(productUrl);
+                    _context.Products.Add(product);
                     await _context.SaveChangesAsync();
                 }
 
-                productParsed = await _context.Products.LastAsync();
-                profile.UserProducts.Add(new UserProfileProduct { UserProfileId = profile.Id, ProductId = productParsed.Id });
-                // фиксики
+                profile.UserProducts.Add(new UserProfileProduct { UserProfileId = profile.Id, ProductId = product.Id });
+
                 await _context.SaveChangesAsync(); 
 
                 _logger.LogInformation($"Post request: added product (id={product.Id})");

@@ -4,6 +4,7 @@ using System.Text;
 
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace ProductApi.Models
 {
@@ -21,6 +22,7 @@ namespace ProductApi.Models
         public string Description { get; set; }
         public string Image { get; set; }
 
+        [JsonIgnore]
         public List<UserProfileProduct> UserProducts { get; set; }
 
         public Product()

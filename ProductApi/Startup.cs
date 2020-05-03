@@ -32,6 +32,7 @@ namespace ProductApi
         {
             services.AddDbContext<ProductContext>(opt =>
                 opt.UseInMemoryDatabase("ProductList"));
+
             services.AddControllers();
 
             services.AddAuthentication("BasicAuthentication")
