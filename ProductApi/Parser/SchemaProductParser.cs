@@ -86,7 +86,7 @@ namespace ProductApi
                 Brand = brand,
                 Currency = currency,
                 Price = price,
-                Discount = 0,
+                IsOnSale = false,  // TO DO: Определение скидки
                 Description = (string)productJson["description"],
                 Image = image,
             };
@@ -141,7 +141,7 @@ namespace ProductApi
                 Brand = productProps["brand"],
                 Currency = productProps["priceCurrency"],
                 Price = decimal.Parse(productProps["price"], CultureInfo.InvariantCulture),
-                Discount = 0,
+                IsOnSale = false, // TO DO
                 Description = productProps["description"],
                 Image = productProps["image"],
             };

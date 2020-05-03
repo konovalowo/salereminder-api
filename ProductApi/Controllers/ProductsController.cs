@@ -10,6 +10,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using System.Security.Claims;
+using ProductApi.Services;
 
 namespace ProductApi.Controllers
 {
@@ -20,15 +21,15 @@ namespace ProductApi.Controllers
     {
         private readonly ProductContext _context;
 
-        private SchemaProductParser _parser;
+        private IParserService _parserService;
 
         private readonly ILogger _logger;
 
-        public ProductsController(ProductContext context, ILogger<ProductsController> logger) 
+        public ProductsController(ProductContext context, ILogger<ProductsController> logger, IParserService parserService) 
         {
             _context = context;
             _logger = logger;
-            _parser = new SchemaProductParser();
+            _parserService = parserService;
         }
 
         // GET: api/Products
@@ -111,7 +112,7 @@ namespace ProductApi.Controllers
 
                 if (product == null)
                 {
-                    product = _parser.ParseProduct(productUrl);
+                    product = await _parserService.Parse(productUrl);
                     _context.Products.Add(product);
                     await _context.SaveChangesAsync();
                 }
