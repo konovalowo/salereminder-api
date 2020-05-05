@@ -11,5 +11,7 @@ namespace ProductApi.Services
         public Task<User> Authenticate(string email, string password);
 
         public Task<User> Register(User user);
+
+        public Task RegisterFirebaseToken(string userId, string token);
     }
 }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -26,7 +27,7 @@ namespace ProductApi.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Authenticate([FromBody]User userParam)
+        public async Task<ActionResult> Authenticate([FromBody]User userParam)
         {
             var user = await _userService.Authenticate(userParam.Email, userParam.Password);
 
@@ -41,7 +42,7 @@ namespace ProductApi.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody]User userParam)
+        public async Task<ActionResult> Register([FromBody]User userParam)
         {
             try
             {
@@ -52,6 +53,24 @@ namespace ProductApi.Controllers
             catch (ArgumentException e)
             {
                 _logger.LogInformation($"Failed to register new user: {e.Message}");
+                return BadRequest();
+            }
+        }
+
+        [Authorize]
+        [HttpPost("register_firebase_token")]
+        public async Task<ActionResult> RegisterFirbaseToken(string token)
+        {
+            try
+            {
+                string currentUserId = User.FindFirst(ClaimTypes.NameIdentifier).Value;
+                await _userService.RegisterFirebaseToken(currentUserId, token);
+                _logger.LogInformation($"Registred firebase token (Id = {currentUserId})");
+                return StatusCode(201);
+            }
+            catch (ArgumentNullException)
+            {
+                _logger.LogError($"Can't register firebase token. User not found.");
                 return BadRequest();
             }
         }

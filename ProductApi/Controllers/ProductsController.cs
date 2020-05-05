@@ -21,7 +21,7 @@ namespace ProductApi.Controllers
     {
         private readonly ProductContext _context;
 
-        private IParserService _parserService;
+        private readonly IParserService _parserService;
 
         private readonly ILogger _logger;
 

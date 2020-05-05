@@ -48,5 +48,12 @@ namespace ProductApi.Services
 
             return user;
         }
+
+        public async Task RegisterFirebaseToken(string userId, string token)
+        {
+            var userProfile = _context.UserProfiles.Single(u => u.UserId.ToString() == userId);
+            userProfile.FirebaseToken = token;
+            await _context.SaveChangesAsync();
+        }
     }
 }

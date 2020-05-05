@@ -16,6 +16,8 @@ namespace ProductApi.Models
         public int UserId { get; set; }
         public User User { get; set; }
 
+        public string FirebaseToken { get; set; }
+
         public List<UserProfileProduct> UserProducts { get; set; }
 
         public UserProfile()

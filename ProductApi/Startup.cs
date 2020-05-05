@@ -41,6 +41,10 @@ namespace ProductApi
             services.AddTransient<IUserService, UserService>();
 
             services.AddTransient<IParserService, ParserService>();
+
+            services.AddHostedService<UpdateDbHostedService>();
+
+            services.AddScoped<INotificationService, NotificationService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
