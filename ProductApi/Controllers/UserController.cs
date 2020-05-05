@@ -59,7 +59,7 @@ namespace ProductApi.Controllers
 
         [Authorize]
         [HttpPost("register_firebase_token")]
-        public async Task<ActionResult> RegisterFirbaseToken(string token)
+        public async Task<ActionResult> RegisterFirbaseToken([FromBody]string token)
         {
             try
             {

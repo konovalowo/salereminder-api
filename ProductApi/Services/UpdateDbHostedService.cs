@@ -33,7 +33,7 @@ namespace ProductApi.Services
         {
             _logger.LogInformation("Update Database Hosted Service running.");
 
-            _timer = new Timer(DoWork, null, TimeSpan.Zero, TimeSpan.FromHours(10));
+            _timer = new Timer(DoWork, null, TimeSpan.Zero, TimeSpan.FromMinutes(5));
 
             return Task.CompletedTask;
         }
@@ -47,17 +47,19 @@ namespace ProductApi.Services
                 var notificationService = scope.ServiceProvider.GetRequiredService<INotificationService>();
                 var parserService = scope.ServiceProvider.GetRequiredService<IParserService>();
 
-                var products = await context.Products.Include(p => p.UserProducts).ThenInclude(u => u.UserProfile).ToListAsync();
+                var products = await context.Products.Include(p => p.UserProducts)
+                                                     .ThenInclude(u => u.UserProfile).ToListAsync();
 
                 foreach (var item in products)
                 {
                     var parsedProduct = await parserService.Parse(item.Url);
 
+                    //test
                     if (parsedProduct.Price < item.Price)
                     {
                         item.IsOnSale = true;
                         var tokens = item.UserProducts.Select(u => u.UserProfile.FirebaseToken);
-                        await notificationService.SendMulticastNotification(tokens.ToList(), notificationBody, notificationTitle, item.Image);
+                        await notificationService.SendMulticastNotification(tokens.ToList(), string.Format(notificationBody, item.Name), notificationTitle, item.Image);
                     }
 
                     item.Price = parsedProduct.Price;

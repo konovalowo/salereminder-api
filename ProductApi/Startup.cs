@@ -44,7 +44,7 @@ namespace ProductApi
 
             services.AddHostedService<UpdateDbHostedService>();
 
-            services.AddScoped<INotificationService, NotificationService>();
+            services.AddSingleton<INotificationService, NotificationService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
