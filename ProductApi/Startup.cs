@@ -40,6 +40,8 @@ namespace ProductApi
 
             services.AddTransient<IUserService, UserService>();
 
+            services.AddTransient<IProductService, ProductsService>();
+
             services.AddTransient<IParserService, ParserService>();
 
             services.AddHostedService<UpdateDbHostedService>();

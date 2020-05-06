@@ -61,6 +61,10 @@ namespace ProductApi.Services
                         var tokens = item.UserProducts.Select(u => u.UserProfile.FirebaseToken);
                         await notificationService.SendMulticastNotification(tokens.ToList(), string.Format(notificationBody, item.Name), notificationTitle, item.Image);
                     }
+                    else if (parsedProduct.Price > item.Price)
+                    {
+                        item.IsOnSale = false;
+                    }
 
                     item.Price = parsedProduct.Price;
                 }

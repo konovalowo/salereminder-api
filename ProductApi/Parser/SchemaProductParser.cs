@@ -67,32 +67,7 @@ namespace ProductApi
             return new HtmlParser().ParseDocument(rawHtml);
         }
 
-        private Product ParseProductJSON(string productUrl, IHtmlDocument dom)
-        {
-
-            JObject productJson = ExtractProductJson(dom);
-
-            string brand = ParseBrandProp(productJson);
-            var offerToken = productJson["offers"];
-            string currency = ParseCurrencyProp(offerToken);
-            decimal price = ParsePriceProp(offerToken);
-            string image = ParseImageProp(productJson);
-
-            Product product = new Product
-            {
-                Url = productUrl,
-                //Id = (string)productJson["sku"],
-                Name = (string)productJson["name"],
-                Brand = brand,
-                Currency = currency,
-                Price = price,
-                IsOnSale = false,  // TO DO: Определение скидки
-                Description = (string)productJson["description"],
-                Image = image,
-            };
-
-            return product;
-        }
+        #region XML parsing
 
         private Product ParseProductXML(string productUrl, IHtmlDocument dom)
         {
@@ -102,7 +77,7 @@ namespace ProductApi
             if (productCell == null)
             {
                 itemPropCells = dom.QuerySelectorAll("[itemprop]");
-            }       
+            }
 
             // Parse all itemprops to dictionary
             var productProps = new Dictionary<string, string>();
@@ -127,16 +102,9 @@ namespace ProductApi
                 }
             }
 
-            // Product id
-            if (!productProps.ContainsKey("sku") || productProps["sku"] == "")
-            {
-                productProps["sku"] = null;
-            }
-
             Product product = new Product
             {
                 Url = productUrl,
-                //Id = productProps["sku"],
                 Name = productProps["name"],
                 Brand = productProps["brand"],
                 Currency = productProps["priceCurrency"],
@@ -148,8 +116,37 @@ namespace ProductApi
 
             return product;
         }
+        #endregion
 
-        private static string ParseBrandProp(JObject productJson)
+        #region Json parsing
+
+        private Product ParseProductJSON(string productUrl, IHtmlDocument dom)
+        {
+
+            JObject productJson = ExtractProductJson(dom);
+
+            string brand = ParseBrandPropJson(productJson);
+            var offerToken = productJson["offers"];
+            string currency = ParseCurrencyPropJson(offerToken);
+            decimal price = ParsePricePropJson(offerToken);
+            string image = ParseImagePropJson(productJson);
+
+            Product product = new Product
+            {
+                Url = productUrl,
+                Name = (string)productJson["name"],
+                Brand = brand,
+                Currency = currency,
+                Price = price,
+                IsOnSale = false,  // TO DO: Определение скидки
+                Description = (string)productJson["description"],
+                Image = image,
+            };
+
+            return product;
+        }
+
+        private static string ParseBrandPropJson(JObject productJson)
         {
             string brand;
             var brandToken = productJson["brand"];
@@ -169,7 +166,7 @@ namespace ProductApi
             return brand;
         }
 
-        private static string ParseCurrencyProp(JToken offerToken)
+        private static string ParseCurrencyPropJson(JToken offerToken)
         {
             string currency;
             if (offerToken["priceCurrency"] != null)
@@ -188,7 +185,7 @@ namespace ProductApi
             return currency;
         }
 
-        private static decimal ParsePriceProp(JToken offerToken)
+        private static decimal ParsePricePropJson(JToken offerToken)
         {
             decimal price; //, discount
             string priceString = null;
@@ -214,7 +211,7 @@ namespace ProductApi
             return price;
         }
 
-        private static string ParseImageProp(JObject productJson)
+        private static string ParseImagePropJson(JObject productJson)
         {
             string image;
             var imageToken = productJson["image"];
@@ -256,5 +253,6 @@ namespace ProductApi
             JObject productJson = JObject.Parse(productJsonString);
             return productJson;
         }
+        #endregion
     }
 }
