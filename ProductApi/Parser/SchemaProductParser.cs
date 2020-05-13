@@ -14,6 +14,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using AngleSharp.Dom;
 using System.Text;
+using ProductApi.Parser;
 
 namespace ProductApi
 {
@@ -27,44 +28,62 @@ namespace ProductApi
             IHtmlDocument dom = GetHtml(productUrl);
             switch (CheckDataType(dom))
             {
-                case "json":
+                case MetaType.JSON:
                     return ParseProductJSON(productUrl, dom);
-                case "xml":
+                case MetaType.XML:
                     return ParseProductXML(productUrl, dom);
                 default:
                     return null;
             }
         }
 
-        private string CheckDataType(IHtmlDocument dom)
+        private MetaType CheckDataType(IHtmlDocument dom)
         {
             if (ExtractProductJson(dom) != null)
             {
-                return "json";
+                return MetaType.JSON;
             }
-            else if (dom.QuerySelectorAll("[itemprop]") != null)
+            else if (dom.QuerySelector("[itemtype=\"http://schema.org/Product\"]") != null)
             {
-                return "xml";
+                return MetaType.XML;
             }
             else
             {
-                return null;
+                throw new ParserException("No metadata found");
             }
         }
 
         private IHtmlDocument GetHtml(string productUrl)
         {
-            string rawHtml;
+            string htmlRaw;
+            byte[] htmlBytes;
             using (WebClient client = new WebClient())
             {
-                client.Encoding = System.Text.Encoding.UTF8;
-                //Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
                 //client.Encoding = System.Text.Encoding.GetEncoding("windows-1251");
-                rawHtml = client.DownloadString(productUrl);
+                htmlBytes = client.DownloadData(productUrl);
             }
 
-            // Creating DOM
-            return new HtmlParser().ParseDocument(rawHtml);
+            htmlRaw = Encoding.UTF8.GetString(htmlBytes);
+            var dom = new HtmlParser().ParseDocument(htmlRaw);
+
+            string encodingString;
+            var encodingCell = dom.QuerySelector("[charset]");
+            if (encodingCell == null)
+            {
+                encodingCell = dom.QuerySelector("[http-equiv=\"Content-Type\"]");
+                string encdoingCellContent = encodingCell.GetAttribute("content");
+                encodingString = encdoingCellContent.Substring(encdoingCellContent.IndexOf("charset") + 8);
+            }
+            else
+            {
+                encodingString = encodingCell.GetAttribute("charset");
+            }
+
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
+            Encoding encodingDestination = Encoding.GetEncoding(encodingString);
+
+            htmlRaw = encodingDestination.GetString(htmlBytes);
+            return new HtmlParser().ParseDocument(htmlRaw);
         }
 
         #region XML parsing
@@ -92,7 +111,7 @@ namespace ProductApi
                         value = itemProperty.GetAttribute("content");
 
                     // Image url parse
-                    if (key == "image" && key == "")
+                    if (key == "image" && (value == "" || value == null))
                         value = itemProperty.GetAttribute("src");
 
                     if (value != null)
@@ -102,16 +121,36 @@ namespace ProductApi
                 }
             }
 
+            if (productProps["priceCurrency"] == null)
+            {
+                var currencyCell = dom.QuerySelector("[itemprop=\"priceCurrency\"]");
+                if (currencyCell == null)
+                {
+                    throw new ParserException("Can't parse product, price currency not found");
+                }
+            }
+
+            if (productProps["name"] == null ||
+                productProps["price"] == null)
+            {
+                throw new ParserException("Can't parse product, name or price not found");
+            }
+
+            if (productProps["img"].StartsWith('/') && !productProps["img"].StartsWith("//"))
+            {
+                productProps["img"] = productUrl.GetSecondDomain() + productProps["img"];
+            }
+
             Product product = new Product
             {
                 Url = productUrl,
                 Name = productProps["name"],
-                Brand = productProps["brand"],
+                Brand = productProps.ContainsKey("brand") ? productProps["brand"] : null,
                 Currency = productProps["priceCurrency"],
                 Price = decimal.Parse(productProps["price"], CultureInfo.InvariantCulture),
                 IsOnSale = false, // TO DO
-                Description = productProps["description"],
-                Image = productProps["image"],
+                Description = productProps.ContainsKey("description") ? productProps["description"] : null,
+                Image = productProps.ContainsKey("image") ? productProps["image"] : null,
             };
 
             return product;
@@ -179,7 +218,7 @@ namespace ProductApi
             }
             else
             {
-                throw new FormatException("Couldn't parse currency");
+                throw new ParserException("Couldn't parse currency");
             }
 
             return currency;
@@ -198,9 +237,9 @@ namespace ProductApi
                     break;
                 }
             }
-            if (priceString == null) 
+            if (priceString == null)
             {
-                throw new FormatException("Couldn't parse item price");
+                throw new ParserException("Couldn't parse item price");
             }
 
             char whitespace = Array.Find(priceString.ToCharArray(), ch => !char.IsDigit(ch));
@@ -254,5 +293,11 @@ namespace ProductApi
             return productJson;
         }
         #endregion
+
+        enum MetaType
+        {
+            XML,
+            JSON
+        }
     }
 }

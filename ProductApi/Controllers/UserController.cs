@@ -58,15 +58,22 @@ namespace ProductApi.Controllers
         }
 
         [Authorize]
-        [HttpPost("register_firebase_token")]
+        [HttpPut("register_firebase_token")]
         public async Task<ActionResult> RegisterFirbaseToken([FromBody]string token)
         {
             try
             {
                 string currentUserId = User.FindFirst(ClaimTypes.NameIdentifier).Value;
-                await _userService.RegisterFirebaseToken(currentUserId, token);
-                _logger.LogInformation($"Registred firebase token (Id = {currentUserId})");
-                return StatusCode(201);
+                if (await _userService.RegisterFirebaseToken(currentUserId, token))
+                {
+                    _logger.LogInformation($"Registred firebase token (Id = {currentUserId})");
+                    return StatusCode(201);
+                }
+                else
+                {
+                    _logger.LogInformation($"Updated firebase token (Id = {currentUserId})");
+                    return StatusCode(204);
+                }
             }
             catch (ArgumentNullException)
             {

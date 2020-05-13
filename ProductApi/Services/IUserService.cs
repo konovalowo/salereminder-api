@@ -12,6 +12,6 @@ namespace ProductApi.Services
 
         public Task<User> Register(User user);
 
-        public Task RegisterFirebaseToken(string userId, string token);
+        public Task<bool> RegisterFirebaseToken(string userId, string token);
     }
 }

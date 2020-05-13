@@ -20,8 +20,10 @@ namespace ProductApi.Services
         private Timer _timer;
 
         // Notifications
-        const string notificationBody = "{0} is on sale!";
+        const string notificationBody = "{0}";
         const string notificationTitle = "Sale!";
+
+        static DateTime schedule = DateTime.Today.AddHours(12).AddDays(1);
 
         public UpdateDbHostedService(IServiceScopeFactory scopeFactory, ILogger<UpdateDbHostedService> logger)
         {
@@ -33,7 +35,8 @@ namespace ProductApi.Services
         {
             _logger.LogInformation("Update Database Hosted Service running.");
 
-            _timer = new Timer(DoWork, null, TimeSpan.Zero, TimeSpan.FromMinutes(5));
+            _timer = new Timer(DoWork, null, 
+                schedule.Subtract(DateTime.Now), TimeSpan.FromMinutes(schedule.Minute + schedule.Hour*60));
 
             return Task.CompletedTask;
         }

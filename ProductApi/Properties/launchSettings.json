@@ -12,7 +12,7 @@
     "IIS Express": {
       "commandName": "IISExpress",
       "launchBrowser": true,
-      "launchUrl": "weatherforecast",
+      "launchUrl": "api",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
@@ -20,7 +20,7 @@
     "ProductApi": {
       "commandName": "Project",
       "launchBrowser": true,
-      "launchUrl": "weatherforecast",
+      "launchUrl": "api",
       "environmentVariables": {
         "GOOGLE_APPLICATION_CREDENTIALS": "C:/Users/user/Documents/sale-reminder-2020-firebase-adminsdk-fm00q-bb4af33249.json",
         "ASPNETCORE_ENVIRONMENT": "Development"

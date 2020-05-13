@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using System.Security.Claims;
 using ProductApi.Services;
+using ProductApi.Parser;
 
 namespace ProductApi.Controllers
 {
@@ -57,9 +58,17 @@ namespace ProductApi.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<Product>> GetProduct(int id)
         {
-            _logger.LogInformation($"Get request for product (id = {id})");
+            try
+            {
+                _logger.LogInformation($"Get request for product (id = {id})");
 
-            return await _productService.GetProduct(id);
+                return await _productService.GetProduct(id);
+            }
+            catch (Exception e)
+            {
+                _logger.LogInformation($"Get request failed: {e.Message}");
+                return StatusCode(500);
+            }
         }
 
         // PUT: api/Products/
@@ -78,7 +87,12 @@ namespace ProductApi.Controllers
             catch (ArgumentNullException e)
             {
                 _logger.LogInformation($"Put request failed: No such user, {e.Message}");
-                return BadRequest();
+                return StatusCode(404);
+            }
+            catch (ParserException e)
+            {
+                _logger.LogInformation($"Put request failed: Can't parse product {e.Message}");
+                return StatusCode(500);
             }
             catch (Exception e)
             {
@@ -103,7 +117,12 @@ namespace ProductApi.Controllers
             catch (ArgumentNullException e)
             {
                 _logger.LogInformation($"Delete request failed: No such user, {e.Message}");
-                return BadRequest();
+                return StatusCode(404);
+            }
+            catch (Exception e)
+            {
+                _logger.LogInformation($"Delete request failed: {e.Message}");
+                return StatusCode(500);
             }
         }
     }

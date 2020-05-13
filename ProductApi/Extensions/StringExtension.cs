@@ -46,5 +46,15 @@ namespace ProductApi
             }
             return str;
         }
+
+        static public string GetSecondDomain(this string url)
+        {
+            int doubleSlashIndex = url.IndexOf("//");
+            if (doubleSlashIndex < 0) {
+                return url;
+            }
+            int firstSlashIndex = url.IndexOf('/', doubleSlashIndex + 2);
+            return url.Substring(0, firstSlashIndex);
+        }
     }
 }

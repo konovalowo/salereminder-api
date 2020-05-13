@@ -52,6 +52,7 @@ namespace ProductApi.Services
             {
                 product = await _parserService.Parse(productUrl);
                 _context.Products.Add(product);
+                await _context.SaveChangesAsync();
             }
 
             profile.UserProducts.Add(new UserProfileProduct { UserProfileId = profile.Id, ProductId = product.Id });
