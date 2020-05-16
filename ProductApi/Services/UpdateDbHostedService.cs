@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using ProductApi.Models;
+using ProductApi.Parser;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -55,7 +56,21 @@ namespace ProductApi.Services
 
                 foreach (var item in products)
                 {
-                    var parsedProduct = await parserService.Parse(item.Url);
+                    Product parsedProduct;
+                    try
+                    {
+                        parsedProduct = await parserService.Parse(item.Url);
+                    }
+                    catch (ParserException e)
+                    {
+                        _logger.LogError("ParserException while updating database " + e.Message);
+                        continue;
+                    }
+                    catch (Exception e)
+                    {
+                        _logger.LogError("Exception in parser while updating database " + e.Message);
+                        continue;
+                    }
 
                     //test
                     if (parsedProduct.Price < item.Price)

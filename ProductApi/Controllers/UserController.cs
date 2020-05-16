@@ -53,6 +53,11 @@ namespace ProductApi.Controllers
             catch (ArgumentException e)
             {
                 _logger.LogInformation($"Failed to register new user: {e.Message}");
+                return StatusCode(409);
+            }
+            catch (Exception e)
+            {
+                _logger.LogInformation($"Failed to register new user: {e.Message}");
                 return BadRequest();
             }
         }

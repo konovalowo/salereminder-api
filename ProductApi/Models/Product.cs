@@ -17,7 +17,7 @@ namespace ProductApi.Models
         public string Name { get; set; }
         public string Brand { get; set; }
         public string Currency { get; set; }
-        public decimal Price { get; set; }
+        public double Price { get; set; }
         public bool IsOnSale { get; set; }
         public string Description { get; set; }
         public string Image { get; set; }

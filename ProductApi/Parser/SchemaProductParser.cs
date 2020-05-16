@@ -15,10 +15,11 @@ using Newtonsoft.Json.Linq;
 using AngleSharp.Dom;
 using System.Text;
 using ProductApi.Parser;
+using SQLitePCL;
 
 namespace ProductApi
 {
-    public class SchemaProductParser
+    public class SchemaProductParser : IProductParser
     {
 
         public SchemaProductParser() { }
@@ -30,8 +31,8 @@ namespace ProductApi
             {
                 case MetaType.JSON:
                     return ParseProductJSON(productUrl, dom);
-                case MetaType.XML:
-                    return ParseProductXML(productUrl, dom);
+                case MetaType.HTMLMicrodata:
+                    return ParseProductHTML(productUrl, dom);
                 default:
                     return null;
             }
@@ -45,7 +46,7 @@ namespace ProductApi
             }
             else if (dom.QuerySelector("[itemtype=\"http://schema.org/Product\"]") != null)
             {
-                return MetaType.XML;
+                return MetaType.HTMLMicrodata;
             }
             else
             {
@@ -57,10 +58,22 @@ namespace ProductApi
         {
             string htmlRaw;
             byte[] htmlBytes;
-            using (WebClient client = new WebClient())
+
+            try
             {
-                //client.Encoding = System.Text.Encoding.GetEncoding("windows-1251");
-                htmlBytes = client.DownloadData(productUrl);
+                using (WebClient client = new WebClient())
+                {
+                    //client.Encoding = System.Text.Encoding.GetEncoding("windows-1251");
+                    htmlBytes = client.DownloadData(productUrl);
+                }
+            }
+            catch (WebException e)
+            {
+                throw new ParserException("Unable to download html string: " + e.Message);
+            }
+            catch (Exception e)
+            {
+                throw new ParserException("Exception while downloading html string: " + e.Message);
             }
 
             htmlRaw = Encoding.UTF8.GetString(htmlBytes);
@@ -74,9 +87,13 @@ namespace ProductApi
                 string encdoingCellContent = encodingCell.GetAttribute("content");
                 encodingString = encdoingCellContent.Substring(encdoingCellContent.IndexOf("charset") + 8);
             }
-            else
+            else if (encodingCell.HasAttribute("cahrset"))
             {
                 encodingString = encodingCell.GetAttribute("charset");
+            }
+            else
+            {
+                return dom;
             }
 
             Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
@@ -88,7 +105,7 @@ namespace ProductApi
 
         #region XML parsing
 
-        private Product ParseProductXML(string productUrl, IHtmlDocument dom)
+        private Product ParseProductHTML(string productUrl, IHtmlDocument dom)
         {
             // Extracting item properties
             var productCell = dom.QuerySelector("[itemtype=\"http://schema.org/Product\"]");
@@ -136,18 +153,19 @@ namespace ProductApi
                 throw new ParserException("Can't parse product, name or price not found");
             }
 
-            if (productProps["img"].StartsWith('/') && !productProps["img"].StartsWith("//"))
+            if (productProps.ContainsKey("image") && productProps["image"].StartsWith('/') 
+                && !productProps["image"].StartsWith("//"))
             {
-                productProps["img"] = productUrl.GetSecondDomain() + productProps["img"];
+                productProps["image"] = productUrl.GetSecondDomain() + productProps["image"];
             }
 
             Product product = new Product
             {
                 Url = productUrl,
-                Name = productProps["name"],
+                Name = productProps.ContainsKey("name") ? productProps["name"] : productUrl,
                 Brand = productProps.ContainsKey("brand") ? productProps["brand"] : null,
                 Currency = productProps["priceCurrency"],
-                Price = decimal.Parse(productProps["price"], CultureInfo.InvariantCulture),
+                Price = double.Parse(productProps["price"], CultureInfo.InvariantCulture),
                 IsOnSale = false, // TO DO
                 Description = productProps.ContainsKey("description") ? productProps["description"] : null,
                 Image = productProps.ContainsKey("image") ? productProps["image"] : null,
@@ -161,13 +179,12 @@ namespace ProductApi
 
         private Product ParseProductJSON(string productUrl, IHtmlDocument dom)
         {
-
             JObject productJson = ExtractProductJson(dom);
 
             string brand = ParseBrandPropJson(productJson);
             var offerToken = productJson["offers"];
             string currency = ParseCurrencyPropJson(offerToken);
-            decimal price = ParsePricePropJson(offerToken);
+            double price = ParsePricePropJson(offerToken);
             string image = ParseImagePropJson(productJson);
 
             Product product = new Product
@@ -224,9 +241,9 @@ namespace ProductApi
             return currency;
         }
 
-        private static decimal ParsePricePropJson(JToken offerToken)
+        private static double ParsePricePropJson(JToken offerToken)
         {
-            decimal price; //, discount
+            double price; //, discount
             string priceString = null;
             string[] possiblePriceTags = { "Price", "price", "lowPrice" };
             foreach (string tag in possiblePriceTags)
@@ -245,8 +262,18 @@ namespace ProductApi
             char whitespace = Array.Find(priceString.ToCharArray(), ch => !char.IsDigit(ch));
             priceString = string.Join("", priceString.Split(whitespace));
 
-            price = decimal.Parse(priceString, CultureInfo.InvariantCulture);
-
+            try
+            {
+                price = double.Parse(priceString, CultureInfo.InvariantCulture);
+            }
+            catch (FormatException e)
+            {
+                throw new ParserException("Unable to parse price due to incorrect format");
+            }
+            catch (Exception e)
+            {
+                throw new ParserException("Unable to parse price");
+            }
             return price;
         }
 
@@ -296,7 +323,7 @@ namespace ProductApi
 
         enum MetaType
         {
-            XML,
+            HTMLMicrodata,
             JSON
         }
     }
