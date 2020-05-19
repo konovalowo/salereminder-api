@@ -31,7 +31,7 @@ namespace ProductApi
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddDbContext<ProductContext>(options =>
-                options.UseSqlServer(Configuration.GetConnectionString("ProductDatabase")));
+                options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
 
             services.AddControllers();
 

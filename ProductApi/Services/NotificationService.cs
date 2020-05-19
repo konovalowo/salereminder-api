@@ -27,7 +27,7 @@ namespace ProductApi.Services
         }
 
         private Message CreateMessage(string token, string notificationBody, 
-            string notificationTitle, string imageUrl = null)
+            string notificationTitle)
         {
             return new Message()
             {
@@ -36,13 +36,12 @@ namespace ProductApi.Services
                 {
                     Body = notificationBody,
                     Title = notificationTitle,
-                    ImageUrl = imageUrl
                 }
             };
         }
 
         private MulticastMessage CreateMulticastMessage(List<string> tokens, string notificationBody, 
-            string notificationTitle, string imageUrl = null)
+            string notificationTitle)
         {
             return new MulticastMessage()
             {
@@ -51,22 +50,21 @@ namespace ProductApi.Services
                 {
                     Body = notificationBody,
                     Title = notificationTitle,
-                    ImageUrl = imageUrl
                 }
             };
         }
 
         public async Task SendNotification(string token, string notificationBody, 
-            string notificationTitle, string imageUrl = null)
+            string notificationTitle)
         {
-            var result = await _messaging.SendAsync(CreateMessage(token, notificationBody, notificationTitle, imageUrl));
+            var result = await _messaging.SendAsync(CreateMessage(token, notificationBody, notificationTitle));
             _logger.LogInformation($"Sent notification result: {result}");
         }
 
         public async Task SendMulticastNotification(List<string> tokens, string notificationBody, 
-            string notificationTitle, string imageUrl = null)
+            string notificationTitle)
         {
-            var result = await _messaging.SendMulticastAsync(CreateMulticastMessage(tokens, notificationBody, notificationTitle, imageUrl));
+            var result = await _messaging.SendMulticastAsync(CreateMulticastMessage(tokens, notificationBody, notificationTitle));
             _logger.LogInformation($"Sent multicast notification result: {result}");
         }
     }

@@ -24,20 +24,30 @@ namespace ProductApi.Services
         const string notificationBody = "{0}";
         const string notificationTitle = "Sale!";
 
-        static DateTime schedule = DateTime.Today.AddHours(12).AddDays(1);
+        private readonly DateTime schedule;
 
         public UpdateDbHostedService(IServiceScopeFactory scopeFactory, ILogger<UpdateDbHostedService> logger)
         {
             _scopeFactory = scopeFactory;
             _logger = logger;
+            schedule = DateTime.Today.AddHours(12).AddMinutes(0).AddDays(1);
         }
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
             _logger.LogInformation("Update Database Hosted Service running.");
 
-            _timer = new Timer(DoWork, null, 
-                schedule.Subtract(DateTime.Now), TimeSpan.FromMinutes(schedule.Minute + schedule.Hour*60));
+            try
+            {
+                _timer = new Timer(DoWork, null,
+                    schedule.Subtract(DateTime.Now), TimeSpan.FromMinutes(schedule.Minute + schedule.Hour * 60));
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                var scheduleNextDay = schedule.AddDays(1);
+                _timer = new Timer(DoWork, null,
+                    scheduleNextDay.Subtract(DateTime.Now), TimeSpan.FromMinutes(scheduleNextDay.Minute + scheduleNextDay.Hour * 60));
+            }
 
             return Task.CompletedTask;
         }
@@ -72,19 +82,30 @@ namespace ProductApi.Services
                         continue;
                     }
 
-                    //test
+                    
                     if (parsedProduct.Price < item.Price)
                     {
-                        item.IsOnSale = true;
-                        var tokens = item.UserProducts.Select(u => u.UserProfile.FirebaseToken);
-                        await notificationService.SendMulticastNotification(tokens.ToList(), string.Format(notificationBody, item.Name), notificationTitle, item.Image);
+                        try
+                        {
+                            item.IsOnSale = true;
+                            var tokens = item.UserProducts.Select(u => u.UserProfile.FirebaseToken);
+                            if (tokens.Count() != 0)
+                            {
+                                await notificationService.SendMulticastNotification(tokens.ToList(), string.Format(notificationBody, item.Name), notificationTitle);
+                            }
+                        }
+                        catch (Exception e)
+                        {
+                            _logger.LogError("Failed to send multicast notification: " + e.Message);
+                        }
                     }
-                    else if (parsedProduct.Price > item.Price)
+                    else if (parsedProduct.Price >= item.Price)
                     {
                         item.IsOnSale = false;
                     }
 
                     item.Price = parsedProduct.Price;
+                    await context.SaveChangesAsync();
                 }
 
                 await context.SaveChangesAsync();
@@ -94,7 +115,7 @@ namespace ProductApi.Services
         public Task StopAsync(CancellationToken stoppingToken)
         {
             _logger.LogInformation("Update Database Hosted Service is stopping.");
-
+      
             _timer?.Change(Timeout.Infinite, 0);
 
             return Task.CompletedTask;

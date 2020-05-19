@@ -8,7 +8,7 @@ namespace ProductApi.Services
 {
     public class ParserService : IParserService
     {
-        private IProductParser _parser;
+        private readonly IProductParser _parser;
 
         public ParserService()
         {

@@ -16,7 +16,7 @@ namespace ProductApi
 {
     public class BasicAuthenticationHandler : AuthenticationHandler<AuthenticationSchemeOptions>
     {
-        IUserService _userService;
+        private readonly IUserService _userService;
 
         public BasicAuthenticationHandler(IOptionsMonitor<AuthenticationSchemeOptions> options,
             ILoggerFactory logger,
@@ -31,7 +31,9 @@ namespace ProductApi
         protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
         {
             if (!Request.Headers.ContainsKey("Authorization"))
+            {
                 return AuthenticateResult.Fail("Missing Authorization Header");
+            }
 
             User user = null;
             try

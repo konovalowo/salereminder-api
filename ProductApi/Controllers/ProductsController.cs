@@ -22,7 +22,7 @@ namespace ProductApi.Controllers
     {
         private readonly IProductService _productService;
 
-        private readonly ILogger _logger;
+        private readonly ILogger<ProductsController> _logger;
 
         public ProductsController(IProductService productService, ILogger<ProductsController> logger) 
         {

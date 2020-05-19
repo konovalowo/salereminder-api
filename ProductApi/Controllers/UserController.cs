@@ -18,7 +18,7 @@ namespace ProductApi.Controllers
     {
         private readonly IUserService _userService;
 
-        private readonly ILogger _logger;
+        private readonly ILogger<UserController> _logger;
 
         public UserController(IUserService userService, ILogger<UserController> logger)
         {
@@ -64,7 +64,7 @@ namespace ProductApi.Controllers
 
         [Authorize]
         [HttpPut("register_firebase_token")]
-        public async Task<ActionResult> RegisterFirbaseToken([FromBody]string token)
+        public async Task<ActionResult> RegisterFirebaseToken([FromBody]string token)
         {
             try
             {
