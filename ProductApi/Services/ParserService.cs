@@ -9,11 +9,11 @@ namespace ProductApi.Services
 {
     public class ParserService : IParserService
     {
-        private readonly ISchemaProductParser _parser;
+        private readonly IProductParser _parser;
 
-        public ParserService(IProductParser[] parsers)
+        public ParserService(ISingleProductParser[] parsers)
         {
-            _parser = new SchemaProductParser(parsers);
+            _parser = new ProductParser(parsers);
         }
 
         public async Task<Product> Parse(string productUrl)

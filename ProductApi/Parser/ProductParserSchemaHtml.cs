@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace ProductApi.Parser
 {
-    public class ProductParserSchemaHtml : IProductParser
+    public class ProductParserSchemaHtml : ISingleProductParser
     {
         private IElement cell;
 

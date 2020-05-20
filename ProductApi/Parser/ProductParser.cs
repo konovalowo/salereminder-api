@@ -19,11 +19,11 @@ using SQLitePCL;
 
 namespace ProductApi
 {
-    public class SchemaProductParser : ISchemaProductParser
+    public class ProductParser : IProductParser
     {
-        private IProductParser[] parsers;
+        private ISingleProductParser[] parsers;
 
-        public SchemaProductParser(IProductParser[] parsers) 
+        public ProductParser(ISingleProductParser[] parsers) 
         {
             this.parsers = parsers;
         }

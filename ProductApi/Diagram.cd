@@ -24,7 +24,7 @@
   <Class Name="ProductApi.Controllers.UserController">
     <Position X="0.75" Y="4.5" Width="1.5" />
     <TypeIdentifier>
-      <HashCode>AAAAAAAAAAAAAAAAgAAAAAIAIAABAAAAAAAEAAAAAAA=</HashCode>
+      <HashCode>AAAAAAAAAAAAIAAAAAAAAAIAIAABAAAAAAAEAAAAAAA=</HashCode>
       <FileName>Controllers\UserController.cs</FileName>
     </TypeIdentifier>
     <ShowAsAssociation>
@@ -79,24 +79,6 @@
       <HashCode>AAAAAAAAAAAAAAAAAAAAABAAAACAAAAAAAAAAAAAEAA=</HashCode>
       <FileName>Extensions\StringExtension.cs</FileName>
     </TypeIdentifier>
-  </Class>
-  <Class Name="ProductApi.SchemaProductParser">
-    <Position X="10" Y="9.5" Width="1.5" />
-    <Compartments>
-      <Compartment Name="Nested Types" Collapsed="false" />
-    </Compartments>
-    <NestedTypes>
-      <Enum Name="ProductApi.SchemaProductParser.MetaType">
-        <TypeIdentifier>
-          <NewMemberFileName>Parser\SchemaProductParser.cs</NewMemberFileName>
-        </TypeIdentifier>
-      </Enum>
-    </NestedTypes>
-    <TypeIdentifier>
-      <HashCode>AAAAAAQgQQAIAAAAAAAAAAAQAAEAAAAABAAACAACAAA=</HashCode>
-      <FileName>Parser\SchemaProductParser.cs</FileName>
-    </TypeIdentifier>
-    <Lollipop Position="0.2" />
   </Class>
   <Class Name="ProductApi.Services.ParserService">
     <Position X="8" Y="8" Width="1.5" />
@@ -158,6 +140,33 @@
       <FileName>BasicAuthenticationHandler.cs</FileName>
     </TypeIdentifier>
   </Class>
+  <Class Name="ProductApi.ProductParser">
+    <Position X="8" Y="9.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAQABAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAA=</HashCode>
+      <FileName>Parser\ProductParser.cs</FileName>
+    </TypeIdentifier>
+    <ShowAsAssociation>
+      <Field Name="parsers" />
+    </ShowAsAssociation>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="ProductApi.Parser.ProductParserSchemaHtml">
+    <Position X="10" Y="11.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAgAAgAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Parser\ProductParserSchemaHtml.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="ProductApi.Parser.ProductParserSchemaJson">
+    <Position X="12.25" Y="11.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAgAAgoAQAIAAAAAAAAAAAAAAEAAAAAAAAAAAACAAA=</HashCode>
+      <FileName>Parser\ProductParserSchemaJson.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
   <Interface Name="ProductApi.Services.IUserService">
     <Position X="3.25" Y="4.5" Width="1.5" />
     <TypeIdentifier>
@@ -173,7 +182,7 @@
     </TypeIdentifier>
   </Interface>
   <Interface Name="ProductApi.IProductParser">
-    <Position X="10" Y="8" Width="1.5" />
+    <Position X="10.25" Y="8" Width="1.5" />
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAAAAAAAA=</HashCode>
       <FileName>Parser\IProductParser.cs</FileName>
@@ -191,6 +200,13 @@
     <TypeIdentifier>
       <HashCode>AAAAAAAAAAAAAAAAAAJAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
       <FileName>Services\INotificationService.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="ProductApi.Parser.ISingleProductParser">
+    <Position X="11" Y="9.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAgAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Parser\ISingleProductParser.cs</FileName>
     </TypeIdentifier>
   </Interface>
   <Font Name="Segoe UI" Size="9" />

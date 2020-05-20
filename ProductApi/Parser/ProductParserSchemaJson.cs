@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace ProductApi.Parser
 {
-    public class ProductParserSchemaJson : IProductParser
+    public class ProductParserSchemaJson : ISingleProductParser
     {
         private JObject jsonObject;
 

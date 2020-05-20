@@ -43,7 +43,7 @@ namespace ProductApi
 
             services.AddTransient<IProductService, ProductsService>();
 
-            services.AddTransient<IParserService, ParserService>(s => new ParserService(new Parser.IProductParser[] {
+            services.AddTransient<IParserService, ParserService>(s => new ParserService(new Parser.ISingleProductParser[] {
                 new ProductParserSchemaJson(),
                 new ProductParserSchemaHtml(), 
             }));
