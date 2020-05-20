@@ -19,39 +19,26 @@ using SQLitePCL;
 
 namespace ProductApi
 {
-    public class SchemaProductParser : IProductParser
+    public class SchemaProductParser : ISchemaProductParser
     {
+        private IProductParser[] parsers;
 
-        public SchemaProductParser() { }
+        public SchemaProductParser(IProductParser[] parsers) 
+        {
+            this.parsers = parsers;
+        }
 
         public Product ParseProduct(string productUrl)
         {
             IHtmlDocument dom = GetHtml(productUrl);
-            switch (CheckDataType(dom))
+            foreach (var parser in parsers)
             {
-                case MetaType.JSON:
-                    return ParseProductJSON(productUrl, dom);
-                case MetaType.HTMLMicrodata:
-                    return ParseProductHTML(productUrl, dom);
-                default:
-                    return null;
+                if (parser.Check(dom))
+                {
+                    return parser.Parse(productUrl, dom);
+                }
             }
-        }
-
-        private MetaType CheckDataType(IHtmlDocument dom)
-        {
-            if (ExtractProductJson(dom) != null)
-            {
-                return MetaType.JSON;
-            }
-            else if (dom.QuerySelector("[itemtype=\"http://schema.org/Product\"]") != null)
-            {
-                return MetaType.HTMLMicrodata;
-            }
-            else
-            {
-                throw new ParserException("No metadata found");
-            }
+            return null;
         }
 
         private IHtmlDocument GetHtml(string productUrl)
@@ -101,230 +88,6 @@ namespace ProductApi
 
             htmlRaw = encodingDestination.GetString(htmlBytes);
             return new HtmlParser().ParseDocument(htmlRaw);
-        }
-
-        #region XML parsing
-
-        private Product ParseProductHTML(string productUrl, IHtmlDocument dom)
-        {
-            // Extracting item properties
-            var productCell = dom.QuerySelector("[itemtype=\"http://schema.org/Product\"]");
-            var itemPropCells = productCell?.QuerySelectorAll("[itemprop]");
-            if (productCell == null)
-            {
-                itemPropCells = dom.QuerySelectorAll("[itemprop]");
-            }
-
-            // Parse all itemprops to dictionary
-            var productProps = new Dictionary<string, string>();
-            foreach (var itemProperty in itemPropCells)
-            {
-                string key = itemProperty.GetAttribute("itemprop");
-                if (!productProps.ContainsKey(key))
-                {
-                    string value = itemProperty.TextContent;
-
-                    if (value == "")
-                        value = itemProperty.GetAttribute("content");
-
-                    // Image url parse
-                    if (key == "image" && (value == "" || value == null))
-                        value = itemProperty.GetAttribute("src");
-
-                    if (value != null)
-                        value = value.RemoveExtraWS();
-
-                    productProps.Add(key, value);
-                }
-            }
-
-            if (productProps["priceCurrency"] == null)
-            {
-                var currencyCell = dom.QuerySelector("[itemprop=\"priceCurrency\"]");
-                if (currencyCell == null)
-                {
-                    throw new ParserException("Can't parse product, price currency not found");
-                }
-            }
-
-            if (productProps["name"] == null ||
-                productProps["price"] == null)
-            {
-                throw new ParserException("Can't parse product, name or price not found");
-            }
-
-            if (productProps.ContainsKey("image") && productProps["image"].StartsWith('/') 
-                && !productProps["image"].StartsWith("//"))
-            {
-                productProps["image"] = productUrl.GetSecondDomain() + productProps["image"];
-            }
-
-            Product product = new Product
-            {
-                Url = productUrl,
-                Name = productProps.ContainsKey("name") ? productProps["name"] : productUrl,
-                Brand = productProps.ContainsKey("brand") ? productProps["brand"] : null,
-                Currency = productProps["priceCurrency"],
-                Price = double.Parse(productProps["price"], CultureInfo.InvariantCulture),
-                IsOnSale = false, // TO DO
-                Description = productProps.ContainsKey("description") ? productProps["description"] : null,
-                Image = productProps.ContainsKey("image") ? productProps["image"] : null,
-            };
-
-            return product;
-        }
-        #endregion
-
-        #region Json parsing
-
-        private Product ParseProductJSON(string productUrl, IHtmlDocument dom)
-        {
-            JObject productJson = ExtractProductJson(dom);
-
-            string brand = ParseBrandPropJson(productJson);
-            var offerToken = productJson["offers"];
-            string currency = ParseCurrencyPropJson(offerToken);
-            double price = ParsePricePropJson(offerToken);
-            string image = ParseImagePropJson(productJson);
-
-            Product product = new Product
-            {
-                Url = productUrl,
-                Name = (string)productJson["name"],
-                Brand = brand,
-                Currency = currency,
-                Price = price,
-                IsOnSale = false,  // TO DO: Определение скидки
-                Description = (string)productJson["description"],
-                Image = image,
-            };
-
-            return product;
-        }
-
-        private static string ParseBrandPropJson(JObject productJson)
-        {
-            string brand;
-            var brandToken = productJson["brand"];
-            if (brandToken != null && brandToken.HasValues)
-            {
-                brand = (string)brandToken["name"];
-            }
-            else if (brandToken != null)
-            {
-                brand = (string)brandToken;
-            }
-            else
-            {
-                brand = null;
-            }
-
-            return brand;
-        }
-
-        private static string ParseCurrencyPropJson(JToken offerToken)
-        {
-            string currency;
-            if (offerToken["priceCurrency"] != null)
-            {
-                currency = (string)offerToken["priceCurrency"];
-            }
-            else if (offerToken["PriceCurrency"] != null)
-            {
-                currency = (string)offerToken["PriceCurrency"];
-            }
-            else
-            {
-                throw new ParserException("Couldn't parse currency");
-            }
-
-            return currency;
-        }
-
-        private static double ParsePricePropJson(JToken offerToken)
-        {
-            double price; //, discount
-            string priceString = null;
-            string[] possiblePriceTags = { "Price", "price", "lowPrice" };
-            foreach (string tag in possiblePriceTags)
-            {
-                if (offerToken[tag] != null)
-                {
-                    priceString = (string)offerToken[tag];
-                    break;
-                }
-            }
-            if (priceString == null)
-            {
-                throw new ParserException("Couldn't parse item price");
-            }
-
-            char whitespace = Array.Find(priceString.ToCharArray(), ch => !char.IsDigit(ch));
-            priceString = string.Join("", priceString.Split(whitespace));
-
-            try
-            {
-                price = double.Parse(priceString, CultureInfo.InvariantCulture);
-            }
-            catch (FormatException e)
-            {
-                throw new ParserException("Unable to parse price due to incorrect format");
-            }
-            catch (Exception e)
-            {
-                throw new ParserException("Unable to parse price");
-            }
-            return price;
-        }
-
-        private static string ParseImagePropJson(JObject productJson)
-        {
-            string image;
-            var imageToken = productJson["image"];
-            if (imageToken != null && imageToken.HasValues)
-            {
-                image = (string)imageToken[0];
-            }
-            else if (imageToken != null)
-            {
-                image = (string)imageToken;
-            }
-            else
-            {
-                image = null;
-            }
-            return image;
-        }
-
-        private JObject ExtractProductJson(IHtmlDocument dom)
-        {
-            // Extracting item properties
-            string productJsonString = null;
-            var productJsonCells = dom.QuerySelectorAll("[type=\"application/ld+json\"]");
-            foreach (var cell in productJsonCells)
-            {
-                var json = JObject.Parse(cell.TextContent);
-                if ((string)json["@type"] == "Product")
-                {
-                    productJsonString = cell.TextContent;
-                    break;
-                }
-            }
-
-            if (productJsonString == null)
-            {
-                return null;
-            }
-
-            JObject productJson = JObject.Parse(productJsonString);
-            return productJson;
-        }
-        #endregion
-
-        enum MetaType
-        {
-            HTMLMicrodata,
-            JSON
         }
     }
 }

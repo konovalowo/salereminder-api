@@ -15,6 +15,7 @@ using Microsoft.EntityFrameworkCore;
 using ProductApi.Models;
 using Microsoft.AspNetCore.Authentication;
 using ProductApi.Services;
+using ProductApi.Parser;
 
 namespace ProductApi
 {
@@ -42,7 +43,10 @@ namespace ProductApi
 
             services.AddTransient<IProductService, ProductsService>();
 
-            services.AddTransient<IParserService, ParserService>();
+            services.AddTransient<IParserService, ParserService>(s => new ParserService(new Parser.IProductParser[] {
+                new ProductParserSchemaJson(),
+                new ProductParserSchemaHtml(), 
+            }));
 
             services.AddHostedService<UpdateDbHostedService>();
 

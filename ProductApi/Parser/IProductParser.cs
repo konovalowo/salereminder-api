@@ -1,13 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
+﻿using AngleSharp.Html.Dom;
 using ProductApi.Models;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
-namespace ProductApi
+namespace ProductApi.Parser
 {
-    interface IProductParser
+    public interface IProductParser
     {
-        Product ParseProduct(string productUrl);
+        bool Check(IHtmlDocument dom);
+
+        Product Parse(string url, IHtmlDocument dom);
     }
 }

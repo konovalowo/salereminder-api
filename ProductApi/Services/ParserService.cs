@@ -1,4 +1,5 @@
 ﻿using ProductApi.Models;
+using ProductApi.Parser;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -8,11 +9,11 @@ namespace ProductApi.Services
 {
     public class ParserService : IParserService
     {
-        private readonly IProductParser _parser;
+        private readonly ISchemaProductParser _parser;
 
-        public ParserService()
+        public ParserService(IProductParser[] parsers)
         {
-            _parser = new SchemaProductParser();
+            _parser = new SchemaProductParser(parsers);
         }
 
         public async Task<Product> Parse(string productUrl)
