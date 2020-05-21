@@ -4,8 +4,6 @@ using Microsoft.Extensions.Options;
 using ProductApi.Models;
 using ProductApi.Services;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text;

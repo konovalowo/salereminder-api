@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using ProductApi.Models;
 using System.Threading.Tasks;
-using ProductApi.Models;
 
 namespace ProductApi.Services
 {

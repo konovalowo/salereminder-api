@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using ProductApi.Models;
+﻿using ProductApi.Models;
 
 namespace ProductApi
 {

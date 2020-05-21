@@ -1,21 +1,10 @@
-﻿using System;
-using System.Globalization;
-using System.Net;
-using System.Threading.Tasks;
-using System.Collections.Generic;
-
-using ProductApi.Models;
-
-using AngleSharp;
-using AngleSharp.Html.Dom;
+﻿using AngleSharp.Html.Dom;
 using AngleSharp.Html.Parser;
-
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using AngleSharp.Dom;
-using System.Text;
+using ProductApi.Models;
 using ProductApi.Parser;
-using SQLitePCL;
+using System;
+using System.Net;
+using System.Text;
 
 namespace ProductApi
 {
