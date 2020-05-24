@@ -81,7 +81,7 @@ namespace ProductApi.Services
                         continue;
                     }
 
-                    
+
                     if (parsedProduct.Price < item.Price)
                     {
                         try
@@ -106,7 +106,7 @@ namespace ProductApi.Services
                     item.Price = parsedProduct.Price;
                     await context.SaveChangesAsync();
                 }
-
+                _logger.LogInformation("Finished updating database");
                 await context.SaveChangesAsync();
             }
         }

@@ -27,7 +27,7 @@ namespace ProductApi
                     return parser.Parse(productUrl, dom);
                 }
             }
-            return null;
+            throw new ParserException("No metadata found");
         }
 
         private IHtmlDocument GetHtml(string productUrl)
