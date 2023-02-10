@@ -1,3 +1,9 @@
+using AngleSharp.Dom;
+using AngleSharp.Html.Dom;
+using ProductApi.Models;
+using System.Collections.Generic;
+using System.Globalization;
+
 namespace ProductApi.Parser
 {
     public class ProductParserSchemaHtml : ISingleProductParser
