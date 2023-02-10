@@ -1,87 +1,71 @@
-﻿using AngleSharp.Dom;
-using AngleSharp.Html.Dom;
-using ProductApi.Models;
-using System.Collections.Generic;
-using System.Globalization;
-
 namespace ProductApi.Parser
 {
     public class ProductParserSchemaHtml : ISingleProductParser
     {
-        private IElement cell;
+        private IElement _schemaProductElement;
 
-        public bool Check(IHtmlDocument dom)
-        {
-            cell = dom.QuerySelector("[itemtype=\"http://schema.org/Product\"]");
-            return cell != null;
-        }
+        public bool Check(IHtmlDocument dom) => 
+            (_schemaProductElement = dom.QuerySelector("[itemtype=\"http://schema.org/Product\"]")) != null;
 
         public Product Parse(string productUrl, IHtmlDocument dom)
         {
-            // Extracting item properties
-            var itemPropCells = cell?.QuerySelectorAll("[itemprop]");
-            if (cell == null)
-            {
-                itemPropCells = dom.QuerySelectorAll("[itemprop]");
-            }
+            var productProps = GetProductProperties(dom, _schemaProductElement);
 
-            // Parse all itemprops to dictionary
-            var productProps = new Dictionary<string, string>();
-            foreach (var itemProperty in itemPropCells)
-            {
-                string key = itemProperty.GetAttribute("itemprop");
-                if (!productProps.ContainsKey(key))
-                {
-                    string value = itemProperty.TextContent;
+            ValidateProductProperties(productProps, productUrl);
 
-                    if (value == "")
-                        value = itemProperty.GetAttribute("content");
-
-                    // Image url parse
-                    if (key == "image" && (value == "" || value == null))
-                        value = itemProperty.GetAttribute("src");
-
-                    if (value != null)
-                        value = value.RemoveExtraWS();
-
-                    productProps.Add(key, value);
-                }
-            }
-
-            if (productProps["priceCurrency"] == null)
-            {
-                var currencyCell = dom.QuerySelector("[itemprop=\"priceCurrency\"]");
-                if (currencyCell == null)
-                {
-                    throw new ParserException("Can't parse product, price currency not found");
-                }
-            }
-
-            if (productProps["name"] == null ||
-                productProps["price"] == null)
-            {
-                throw new ParserException("Can't parse product, name or price not found");
-            }
-
-            if (productProps.ContainsKey("image") && productProps["image"].StartsWith('/')
-                && !productProps["image"].StartsWith("//"))
-            {
-                productProps["image"] = productUrl.GetSecondDomain() + productProps["image"];
-            }
-
-            Product product = new Product
+            return new Product
             {
                 Url = productUrl,
-                Name = productProps.ContainsKey("name") ? productProps["name"] : productUrl,
-                Brand = productProps.ContainsKey("brand") ? productProps["brand"] : null,
+                Name = productProps.GetValueOrDefault("name", productUrl),
+                Brand = productProps.GetValueOrDefault("brand", null),
                 Currency = productProps["priceCurrency"],
                 Price = double.Parse(productProps["price"], CultureInfo.InvariantCulture),
                 IsOnSale = false, // TO DO
-                Description = productProps.ContainsKey("description") ? productProps["description"] : null,
-                Image = productProps.ContainsKey("image") ? productProps["image"] : null,
+                Description = productProps.GetValueOrDefault("description", null),
+                Image = productProps.GetValueOrDefault("image", null),
             };
+        }
 
-            return product;
+        private Dictionary<string, string> GetProductProperties(IHtmlDocument dom, IElement schemaProductElement)
+        {
+            var itemPropCells = schemaProductElement?.QuerySelectorAll("[itemprop]") 
+                                ?? dom.QuerySelectorAll("[itemprop]");
+
+            var productProps = new Dictionary<string, string>();
+            foreach (var itemProp in itemPropCells)
+            {
+                var key = itemProp.GetAttribute("itemprop");
+                if (productProps.ContainsKey(key)) continue;
+
+                var value = itemProp.TextContent;
+
+                if (value == "")
+                    value = itemProp.GetAttribute("content");
+
+                if (key == "image" && (value == "" || value == null))
+                    value = itemProp.GetAttribute("src");
+
+                value = value?.RemoveExtraWS();
+
+                productProps.Add(key, value);
+            }
+
+            return productProps;
+        }
+
+        private void ValidateProductProperties(Dictionary<string, string> productProps, string productUrl)
+        {
+            if (!productProps.TryGetValue("priceCurrency", out var currency))
+                throw new ParserException("Can't parse product, price currency not found");
+
+            if (!productProps.ContainsKey("name") || !productProps.ContainsKey("price"))
+                throw new ParserException("Can't parse product, name or price not found");
+
+            if (productProps.TryGetValue("image", out var image) 
+                && image.StartsWith('/') && !image.StartsWith("//"))
+            {
+                productProps["image"] = productUrl.GetSecondDomain() + productProps["image"];
+            }
         }
     }
 }
